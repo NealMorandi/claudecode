@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.LongTermAlertMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.LongTermAlertStatus">
+        <id column="id" property="id"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="alert_status" property="alertStatus"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByEmployeeId" resultMap="BaseResultMap">
+        SELECT id, employee_id, alert_status, updated_at
+        FROM long_term_alert_status
+        WHERE employee_id = #{employeeId}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT id, employee_id, alert_status, updated_at
+        FROM long_term_alert_status
+        ORDER BY updated_at DESC
+    </select>
+
+    <insert id="insertOrUpdate">
+        INSERT INTO long_term_alert_status (employee_id, alert_status, updated_at)
+        VALUES (#{employeeId}, #{alertStatus}, NOW())
+        ON DUPLICATE KEY UPDATE
+            alert_status = #{alertStatus},
+            updated_at = NOW()
+    </insert>
+
+    <select id="countByStatus" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM long_term_alert_status
+        WHERE alert_status = #{alertStatus}
+    </select>
+
+    <!-- 長期利用警告一覧：JOIN+集計で1クエリ（N+1回避） -->
+    <resultMap id="LongTermAlertVOResultMap" type="com.dom.dormitory.entity.vo.LongTermAlertVO">
+        <result column="employee_id"   property="employeeId"/>
+        <result column="employee_no"   property="employeeNo"/>
+        <result column="employee_name" property="employeeName"/>
+        <result column="department"    property="department"/>
+        <result column="room_name"     property="roomName"/>
+        <result column="dormitory_name" property="dormitoryName"/>
+        <result column="checkin_date"  property="checkinDate"/>
+        <result column="first_use_date" property="firstUseDate"/>
+        <result column="years_of_stay" property="yearsOfStay"/>
+        <result column="overdue_days"  property="overdueDays"/>
+        <result column="overdue_since" property="overdueSince"/>
+        <result column="alert_status"  property="alertStatus"/>
+        <result column="updated_at"    property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectAlertList" resultMap="LongTermAlertVOResultMap">
+        SELECT
+            e.id                                                                     AS employee_id,
+            e.employee_no,
+            e.name                                                                   AS employee_name,
+            e.department,
+            rm.name                                                                  AS room_name,
+            d.name                                                                   AS dormitory_name,
+            r.checkin_date,
+            e.first_use_date,
+            TIMESTAMPDIFF(YEAR, e.first_use_date, CURDATE())                         AS years_of_stay,
+            GREATEST(0, DATEDIFF(CURDATE(), DATE_ADD(e.first_use_date, INTERVAL #{thresholdYears} YEAR))) AS overdue_days,
+            DATE_ADD(e.first_use_date, INTERVAL #{thresholdYears} YEAR)              AS overdue_since,
+            COALESCE(las.alert_status, 'pending')                                    AS alert_status,
+            las.updated_at
+        FROM residences r
+        INNER JOIN employees e  ON e.id  = r.employee_id       AND e.is_deleted  = 0 AND e.first_use_date IS NOT NULL
+        INNER JOIN rooms rm     ON rm.id = r.room_id            AND rm.is_deleted = 0
+        INNER JOIN dormitories d ON d.id = rm.dormitory_id      AND d.is_deleted  = 0
+        LEFT JOIN long_term_alert_status las ON las.employee_id = e.id
+        WHERE r.status = 'active'
+          AND TIMESTAMPDIFF(YEAR, e.first_use_date, CURDATE()) >= #{thresholdYears}
+        ORDER BY years_of_stay DESC, e.first_use_date ASC
+    </select>
+
+</mapper>

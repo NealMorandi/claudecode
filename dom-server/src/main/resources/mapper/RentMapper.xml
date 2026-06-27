@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.RentMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.Rent">
+        <id column="id" property="id"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="residence_id" property="residenceId"/>
+        <result column="year_month" property="yearMonth"/>
+        <result column="area" property="area"/>
+        <result column="unit_price" property="unitPrice"/>
+        <result column="days" property="days"/>
+        <result column="month_days" property="monthDays"/>
+        <result column="amount" property="amount"/>
+        <result column="status" property="status"/>
+        <result column="confirmed_at" property="confirmedAt"/>
+        <result column="confirmed_by" property="confirmedBy"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, employee_id, residence_id, `year_month`, area, unit_price, days,
+               month_days, amount, status, confirmed_at, confirmed_by, created_at
+        FROM rent_records
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectHistory" resultMap="BaseResultMap">
+        SELECT rr.id, rr.employee_id, rr.residence_id, rr.`year_month`, rr.area, rr.unit_price,
+               rr.days, rr.month_days, rr.amount, rr.status, rr.confirmed_at, rr.confirmed_by, rr.created_at
+        FROM rent_records rr
+        WHERE rr.is_deleted = 0
+        <if test="yearMonth != null and yearMonth != ''">
+            AND rr.`year_month` = #{yearMonth}
+        </if>
+        <if test="employeeId != null">
+            AND rr.employee_id = #{employeeId}
+        </if>
+        <if test="status != null and status != ''">
+            AND rr.status = #{status}
+        </if>
+        ORDER BY rr.`year_month` DESC, rr.employee_id
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countHistory" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM rent_records rr
+        WHERE rr.is_deleted = 0
+        <if test="yearMonth != null and yearMonth != ''">
+            AND rr.`year_month` = #{yearMonth}
+        </if>
+        <if test="employeeId != null">
+            AND rr.employee_id = #{employeeId}
+        </if>
+        <if test="status != null and status != ''">
+            AND rr.status = #{status}
+        </if>
+    </select>
+
+    <select id="countConfirmedHistory" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM rent_records rr
+        WHERE rr.is_deleted = 0 AND rr.status = 'confirmed'
+        <if test="yearMonth != null and yearMonth != ''">
+            AND rr.`year_month` = #{yearMonth}
+        </if>
+        <if test="employeeId != null">
+            AND rr.employee_id = #{employeeId}
+        </if>
+    </select>
+
+    <select id="sumHistoryAmount" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(rr.amount), 0)
+        FROM rent_records rr
+        WHERE rr.is_deleted = 0
+        <if test="yearMonth != null and yearMonth != ''">
+            AND rr.`year_month` = #{yearMonth}
+        </if>
+        <if test="employeeId != null">
+            AND rr.employee_id = #{employeeId}
+        </if>
+    </select>
+
+    <select id="countByYearMonth" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM rent_records
+        WHERE `year_month` = #{yearMonth} AND status = 'confirmed' AND is_deleted = 0
+    </select>
+
+    <select id="sumConfirmedByYearMonth" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM rent_records
+        WHERE `year_month` = #{yearMonth} AND status = 'confirmed' AND is_deleted = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rent_records (employee_id, residence_id, `year_month`, area, unit_price, days, month_days, amount, status, created_at)
+        VALUES (#{employeeId}, #{residenceId}, #{yearMonth}, #{area}, #{unitPrice}, #{days}, #{monthDays}, #{amount}, 'draft', NOW())
+    </insert>
+
+    <insert id="batchInsert">
+        INSERT INTO rent_records (employee_id, residence_id, `year_month`, area, unit_price, days, month_days, amount, status, created_at)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.employeeId}, #{item.residenceId}, #{item.yearMonth}, #{item.area}, #{item.unitPrice},
+             #{item.days}, #{item.monthDays}, #{item.amount}, 'draft', NOW())
+        </foreach>
+    </insert>
+
+    <update id="confirmByYearMonth">
+        UPDATE rent_records
+        SET status = 'confirmed', confirmed_at = NOW()
+        WHERE `year_month` = #{yearMonth} AND status = 'draft' AND is_deleted = 0
+    </update>
+
+    <update id="deleteByYearMonth">
+        UPDATE rent_records
+        SET is_deleted = 1, updated_at = NOW()
+        WHERE `year_month` = #{yearMonth} AND is_deleted = 0
+    </update>
+
+    <select id="selectForExport" resultMap="BaseResultMap">
+        SELECT rr.id, rr.employee_id, rr.residence_id, rr.`year_month`, rr.area, rr.unit_price,
+               rr.days, rr.month_days, rr.amount, rr.status, rr.confirmed_at, rr.created_at
+        FROM rent_records rr
+        INNER JOIN employees e ON e.id = rr.employee_id
+        WHERE rr.is_deleted = 0
+        <if test="yearMonth != null and yearMonth != ''">
+            AND rr.`year_month` = #{yearMonth}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (e.name LIKE CONCAT('%', #{keyword}, '%')
+              OR e.employee_no LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY rr.`year_month` DESC, e.employee_no
+    </select>
+
+</mapper>

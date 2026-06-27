@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.DormitoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.Dormitory">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="prefecture" property="prefecture"/>
+        <result column="address" property="address"/>
+        <result column="layout" property="layout"/>
+        <result column="remark" property="remark"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, name, type, status, prefecture, address, layout, remark, is_deleted, created_at
+        FROM dormitories
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT id, name, type, status, prefecture, address, layout, remark, is_deleted, created_at
+        FROM dormitories
+        WHERE is_deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <sql id="whereCondition">
+        WHERE is_deleted = 0
+        <if test="name != null and name != ''">AND name LIKE CONCAT('%', #{name}, '%')</if>
+        <if test="type != null and type != ''">AND type = #{type}</if>
+        <if test="prefecture != null and prefecture != ''">AND prefecture = #{prefecture}</if>
+        <if test="status != null and status != ''">AND status = #{status}</if>
+    </sql>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT id, name, type, status, prefecture, address, layout, remark, is_deleted, created_at
+        FROM dormitories
+        <include refid="whereCondition"/>
+        ORDER BY created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByCondition" resultType="long">
+        SELECT COUNT(*) FROM dormitories
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dormitories (name, type, prefecture, address, layout, remark, is_deleted, created_at)
+        VALUES (#{name}, #{type}, #{prefecture}, #{address}, #{layout}, #{remark}, 0, NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE dormitories
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="type != null">type = #{type},</if>
+            prefecture = #{prefecture},
+            <if test="address != null">address = #{address},</if>
+            <if test="layout != null">layout = #{layout},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE dormitories SET status = 'inactive' WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,548 @@
+@import './variables.css';
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #app { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
+
+.page-container {
+  padding: 20px;
+  min-height: calc(100vh - var(--header-height));
+}
+.search-card { margin-bottom: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.flex-end { display: flex; justify-content: flex-end; }
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — dark navy card
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-card {
+  background: var(--navy-mid) !important;
+  border: 1px solid var(--navy-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.04) inset !important;
+}
+.el-card__header {
+  background: rgba(99,132,255,0.06) !important;
+  border-bottom: 1px solid var(--navy-border) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  padding: 14px 20px !important;
+}
+.el-card__body {
+  padding: 20px !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — purple-gradient primary button
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-button--primary {
+  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.38) !important;
+  font-weight: 500 !important;
+}
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background: linear-gradient(135deg, #818cf8 0%, #8b5cf6 100%) !important;
+  box-shadow: 0 6px 24px rgba(99,102,241,0.55) !important;
+}
+.el-button--primary:active {
+  background: linear-gradient(135deg, #4f46e5 0%, #6d28d9 100%) !important;
+}
+.el-button--primary.is-loading,
+.el-button--primary.is-disabled {
+  background: linear-gradient(135deg, rgba(99,102,241,0.5) 0%, rgba(124,58,237,0.5) 100%) !important;
+  box-shadow: none !important;
+}
+
+/* default button */
+.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger) {
+  background: rgba(99,132,255,0.08) !important;
+  border-color: rgba(99,132,255,0.22) !important;
+  color: var(--text-secondary) !important;
+}
+.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):hover {
+  background: rgba(99,132,255,0.15) !important;
+  border-color: rgba(99,132,255,0.4) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — input / select / date-picker
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-input__wrapper,
+.el-textarea__inner {
+  background: var(--navy-deep) !important;
+  box-shadow: 0 0 0 1px rgba(99,132,255,0.22) inset !important;
+  border-radius: 8px !important;
+}
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(99,132,255,0.45) inset !important;
+}
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px #6366f1 inset, 0 0 0 3px rgba(99,102,241,0.18) !important;
+}
+.el-input__inner {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+.el-input__prefix-inner .el-icon,
+.el-input__suffix-inner .el-icon {
+  color: var(--text-muted) !important;
+}
+
+/* date-picker icon */
+.el-date-editor .el-input__prefix .el-icon { color: var(--text-muted) !important; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — select dropdown
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-select-dropdown,
+.el-select-dropdown.el-popper,
+.el-popper.el-select__popper {
+  background: #0f1729 !important;
+  background-color: #0f1729 !important;
+  border: 1px solid rgba(99,132,255,0.2) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+/* 内部スクロールエリアの白抜け防止 */
+.el-select-dropdown .el-scrollbar,
+.el-select-dropdown .el-scrollbar__view,
+.el-select-dropdown__list,
+.el-select-dropdown__wrap {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.el-select-dropdown__item {
+  color: var(--text-secondary) !important;
+  background-color: transparent !important;
+}
+.el-select-dropdown__item:hover,
+.el-select-dropdown__item.is-hovering {
+  background: rgba(99,102,241,0.14) !important;
+  background-color: rgba(99,102,241,0.14) !important;
+  color: var(--text-primary) !important;
+}
+.el-select-dropdown__item.is-selected {
+  color: #818cf8 !important;
+  font-weight: 500 !important;
+}
+.el-select-dropdown__empty {
+  color: var(--text-muted) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — date picker panel
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-picker__popper,
+.el-picker__popper .el-picker-panel,
+.el-picker__popper .el-date-picker,
+.el-picker__popper .el-date-picker__header,
+.el-picker__popper .el-date-table,
+.el-picker__popper .el-picker-panel__body,
+.el-picker__popper .el-picker-panel__content,
+.el-picker__popper .el-picker-panel__footer {
+  background: var(--navy-deep) !important;
+}
+.el-picker__popper {
+  border: 1px solid rgba(99,132,255,0.2) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+.el-date-picker__header-label,
+.el-date-table th,
+.el-date-table td .el-date-table-cell__text {
+  color: var(--text-secondary) !important;
+}
+.el-date-table td.current .el-date-table-cell__text,
+.el-date-table td.today .el-date-table-cell__text {
+  color: #818cf8 !important;
+}
+.el-date-table td.available:hover .el-date-table-cell__text {
+  background: rgba(99,102,241,0.18) !important;
+  color: var(--text-primary) !important;
+}
+.el-date-table td.today .el-date-table-cell__text {
+  color: #818cf8 !important;
+  font-weight: 600 !important;
+}
+.el-date-table td.available.selected .el-date-table-cell__text {
+  background: #6366f1 !important;
+  color: #fff !important;
+}
+.el-picker-panel__icon-btn,
+.el-date-picker__prev-btn,
+.el-date-picker__next-btn {
+  color: var(--text-secondary) !important;
+}
+.el-picker-panel__icon-btn:hover {
+  color: var(--text-primary) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — form labels
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-form-item__label {
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+}
+.el-form-item__error {
+  color: #f87171 !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — descriptions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-descriptions__body {
+  background: transparent !important;
+}
+.el-descriptions__table {
+  border-color: rgba(99,132,255,0.12) !important;
+}
+.el-descriptions__label {
+  background: rgba(15,23,41,0.55) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+  border-color: rgba(99,132,255,0.12) !important;
+}
+.el-descriptions__content {
+  background: var(--navy-mid) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(99,132,255,0.12) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — alert
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-alert {
+  border-radius: 8px !important;
+}
+.el-alert--info {
+  background: rgba(99,102,241,0.12) !important;
+  border: 1px solid rgba(99,102,241,0.25) !important;
+}
+.el-alert--info .el-alert__title {
+  color: #a5b4fc !important;
+}
+.el-alert--info .el-alert__icon {
+  color: #818cf8 !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — tag
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-tag {
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+.el-tag--primary {
+  background: rgba(99,102,241,0.18) !important;
+  border-color: rgba(99,102,241,0.35) !important;
+  color: #a5b4fc !important;
+}
+.el-tag--danger {
+  background: rgba(248,113,113,0.18) !important;
+  border-color: rgba(248,113,113,0.35) !important;
+  color: #fca5a5 !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — empty (preview placeholder)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-empty__description p {
+  color: var(--text-muted) !important;
+}
+/* Tint the SVG illustration blue-purple */
+.el-empty__image svg {
+  filter: hue-rotate(195deg) saturate(0.6) brightness(0.7) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — table global
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-table {
+  --el-table-bg-color:            transparent;
+  --el-table-tr-bg-color:         transparent;
+  --el-table-header-bg-color:     transparent;
+  --el-table-border-color:        rgba(99,132,255,0.10);
+  --el-table-row-hover-bg-color:  rgba(99,102,241,0.08);
+  --el-fill-color-lighter:        transparent;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+}
+.el-table__inner-wrapper::before { display: none !important; }
+.el-table .el-table__header th.el-table__cell {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  border-bottom: 1px solid rgba(99,132,255,0.12) !important;
+}
+.el-table .el-table__body td.el-table__cell {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid rgba(99,132,255,0.06) !important;
+  font-size: 13px !important;
+}
+.el-table__body tr:hover > td.el-table__cell {
+  background: rgba(99,102,241,0.08) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   テーブルパネル — 内部スクロール
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.table-panel,
+.main-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.table-panel > .el-table,
+.main-panel > .el-table {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — pagination
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-pagination button,
+.el-pagination .el-pager li {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border-color: transparent !important;
+}
+.el-pagination .el-pager li.is-active {
+  background: rgba(99,102,241,0.22) !important;
+  color: #818cf8 !important;
+  border-radius: 6px !important;
+}
+.el-pagination button:hover,
+.el-pagination .el-pager li:hover {
+  color: var(--text-primary) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — dialog
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-dialog {
+  background: var(--navy-deep) !important;
+  border: 1px solid var(--navy-border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6) !important;
+}
+.el-dialog__header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid var(--navy-border) !important;
+}
+.el-dialog__title {
+  color: var(--text-primary) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+.el-dialog__headerbtn {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.15s !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.el-dialog__headerbtn:hover {
+  background: rgba(255,255,255,0.1) !important;
+}
+.el-dialog__headerbtn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.el-dialog__headerbtn .el-icon {
+  color: rgba(255,255,255,0.4) !important;
+  font-size: 14px !important;
+}
+.el-dialog__headerbtn:hover .el-icon {
+  color: #ffffff !important;
+}
+.el-overlay {
+  position: fixed !important;
+  z-index: var(--z-modal) !important; /* 1000 — dialog 共通オーバーレイ */
+  background: rgba(5,10,25,0.72) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — message box (dark theme unified)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ① 中央配置 + 最前面固定 */
+.el-overlay-message-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: var(--z-toast) !important; /* 9999 — すべてのUIより前面 */
+}
+
+/* ② コンテナ — border-radius を dialog と統一(14px) */
+.el-message-box {
+  background: var(--navy-deep) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  min-width: 380px !important;
+}
+
+/* ③ ヘッダー — flex + space-between でタイトル / × を両端整列 */
+.el-message-box__header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  background: transparent !important;
+}
+.el-message-box__title {
+  color: #ffffff !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+/* ④ 閉じるボタン */
+.el-message-box__headerbtn {
+  position: static !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.15s !important;
+  outline: none !important;
+  box-shadow: none !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+.el-message-box__headerbtn:hover  { background: rgba(255,255,255,0.1) !important; }
+.el-message-box__headerbtn:focus  { outline: none !important; box-shadow: none !important; }
+.el-message-box__headerbtn .el-message-box__close       { color: rgba(255,255,255,0.4) !important; font-size: 14px !important; }
+.el-message-box__headerbtn:hover .el-message-box__close { color: #ffffff !important; }
+
+/* ⑤ ボディ */
+.el-message-box__content {
+  padding: 20px !important;
+  background: transparent !important;
+}
+
+/* ⑥ アイコン + テキスト — 横並び */
+.el-message-box__container {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+.el-message-box__status.el-icon {
+  flex-shrink: 0 !important;
+  font-size: 18px !important;
+  margin-top: 2px !important;
+  color: var(--color-warning) !important;
+}
+.el-message-box__status.el-icon.el-message-box-icon--error   { color: var(--color-danger)  !important; }
+.el-message-box__status.el-icon.el-message-box-icon--success { color: var(--color-success) !important; }
+.el-message-box__status.el-icon.el-message-box-icon--info    { color: var(--color-info)    !important; }
+.el-message-box__message {
+  flex: 1 !important;
+  padding-left: 0 !important;
+}
+.el-message-box__message p {
+  color: rgba(255,255,255,0.72) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+}
+
+/* ⑦ フッター — 上区切り線 + 右寄せ */
+.el-message-box__btns {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 14px 20px !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  background: transparent !important;
+}
+.el-message-box__btns .el-button {
+  min-width: 80px !important;
+  width: auto !important;
+  flex: none !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Element Plus — message toast
+   ダーク背景 + 緑枠。画面上部中央固定。
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.el-message {
+  position: fixed !important;
+  top: 20px;
+  left: 50% !important;
+  z-index: var(--z-toast) !important; /* 9999 */
+  /* ダーク背景 */
+  background: rgba(4, 10, 24, 0.97) !important;
+  /* 緑枠（2px・やや透過） */
+  border: 2px solid rgba(34, 197, 94, 0.72) !important;
+  border-radius: 12px !important;
+  /* 重みのあるシャドウ：緑グロー + 深い暗影 */
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.12),
+    0 4px 20px rgba(34, 197, 94, 0.20),
+    0 16px 48px rgba(0, 0, 0, 0.80) !important;
+  padding: 14px 22px !important;
+  min-width: 300px !important;
+  /* 1行強制レイアウト */
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+}
+/* 水平中央（表示中） */
+.el-message:not(.el-message-fade-enter-from):not(.el-message-fade-leave-to) {
+  transform: translateX(-50%) !important;
+}
+/* フェードアニメーション（上からスライドイン） */
+.el-message-fade-enter-from,
+.el-message-fade-leave-to {
+  transform: translate(-50%, -100%) !important;
+  opacity: 0 !important;
+}
+/* テキスト：1行強制（改行・折り返し禁止） */
+.el-message .el-message__content {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+}
+/* アイコン：種別ごとの色でステータスを識別 */
+.el-message--success .el-message__icon { color: #4ade80 !important; }
+.el-message--warning .el-message__icon { color: #fbbf24 !important; }
+.el-message--error   .el-message__icon { color: #f87171 !important; }
+.el-message--info    .el-message__icon { color: #818cf8 !important; }

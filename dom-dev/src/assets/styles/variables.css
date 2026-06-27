@@ -1,0 +1,91 @@
+:root {
+  /* ── Brand ───────────────────────────── */
+  --color-primary:     #6366f1;
+  --color-primary-alt: #7c3aed;
+  --color-success:     #22c55e;
+  --color-warning:     #f59e0b;
+  --color-danger:      #f87171;
+  --color-info:        #94a3b8;
+
+  /* ── Layout ──────────────────────────── */
+  --sidebar-width:  210px;
+  --sidebar-bg:     transparent;
+  --header-height:  60px;
+  --header-bg:      transparent;
+
+  /* ── Z-index layers ──────────────────── */
+  --z-bg:       0;   /* orb / grid-overlay */
+  --z-layout:   1;   /* layout-wrapper */
+  --z-header:   10;  /* header-wrapper */
+  --z-dropdown: 100; /* popper / select panel */
+  --z-modal:    1000; /* dialog / message-box */
+  --z-toast:    9999; /* el-message / SystemAnnouncement */
+
+  /* ── Dark navy palette ────────────────── */
+  --navy-deep:    #0f1729;
+  --navy-mid:     #16213a;
+  --navy-surface: #1a2847;
+  --navy-border:  rgba(99,132,255,0.16);
+  --navy-glow:    rgba(99,102,241,0.25);
+
+  /* ── Text ────────────────────────────── */
+  --text-primary:     #c8d6f0;
+  --text-secondary:   #8ba3c0;
+  --text-muted:       #5a7a99;
+  --text-placeholder: #4a6480;
+
+  /* ── Element Plus — color ─────────────── */
+  --el-color-primary:           #6366f1;
+  --el-color-primary-light-3:   #818cf8;
+  --el-color-primary-light-5:   rgba(99,102,241,0.60);
+  --el-color-primary-light-7:   rgba(99,102,241,0.35);
+  --el-color-primary-light-8:   rgba(99,102,241,0.22);
+  --el-color-primary-light-9:   rgba(99,102,241,0.12);
+  --el-color-primary-dark-2:    #4f46e5;
+
+  /* ── Element Plus — backgrounds ─────────── */
+  --el-bg-color:                #16213a;
+  --el-bg-color-page:           #0f1729;
+  --el-bg-color-overlay:        #0f1729;
+
+  /* ── Element Plus — borders ──────────────── */
+  --el-border-color:             rgba(99,132,255,0.22);
+  --el-border-color-light:       rgba(99,132,255,0.16);
+  --el-border-color-lighter:     rgba(99,132,255,0.10);
+  --el-border-color-extra-light: rgba(99,132,255,0.06);
+
+  /* ── Element Plus — fills ─────────────────── */
+  --el-fill-color:               rgba(99,132,255,0.09);
+  --el-fill-color-light:         rgba(99,132,255,0.06);
+  --el-fill-color-lighter:       rgba(99,132,255,0.03);
+  --el-fill-color-blank:         #16213a;
+
+  /* ── Element Plus — text ──────────────────── */
+  --el-text-color-primary:       #c8d6f0;
+  --el-text-color-regular:       #9ab3cc;
+  --el-text-color-secondary:     #7a96b0;
+  --el-text-color-placeholder:   #4a6480;
+  --el-text-color-disabled:      #3d5570;
+
+  /* ── Element Plus — disabled ──────────────── */
+  --el-disabled-bg-color:        rgba(15,23,41,0.6);
+  --el-disabled-border-color:    rgba(99,132,255,0.08);
+  --el-disabled-text-color:      #3d5570;
+
+  /* ── Element Plus — card ──────────────────── */
+  --el-card-bg-color:            #16213a;
+  --el-card-border-color:        rgba(99,132,255,0.18);
+
+  /* ── Element Plus — input ─────────────────── */
+  --el-input-bg-color:           #0f1729;
+  --el-input-text-color:         #c8d6f0;
+  --el-input-border-color:       rgba(99,132,255,0.22);
+  --el-input-hover-border-color: rgba(99,132,255,0.45);
+  --el-input-focus-border-color: #6366f1;
+  --el-input-placeholder-color:  #4a6480;
+
+  /* ── Element Plus — select ────────────────── */
+  --el-select-input-color:        #c8d6f0;
+  --el-select-option-hover-bg:    rgba(99,102,241,0.14);
+  --el-select-option-selected-color: #818cf8;
+}

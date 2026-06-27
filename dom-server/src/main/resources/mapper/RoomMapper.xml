@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.RoomMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.Room">
+        <id column="id" property="id"/>
+        <result column="dormitory_id" property="dormitoryId"/>
+        <result column="name" property="name"/>
+        <result column="area" property="area"/>
+        <result column="capacity" property="capacity"/>
+        <result column="rent" property="rent"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, dormitory_id, name, area, capacity, rent, status, remark, is_deleted, created_at
+        FROM rooms
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectByDormitoryId" resultMap="BaseResultMap">
+        SELECT id, dormitory_id, name, area, capacity, rent, status, remark, is_deleted, created_at
+        FROM rooms
+        WHERE dormitory_id = #{dormitoryId} AND is_deleted = 0
+        ORDER BY name
+    </select>
+
+    <!-- 空き部屋選択用：JOIN で寮名/寮種別を1クエリ取得（N+1回避） -->
+    <resultMap id="RoomVOResultMap" type="com.dom.dormitory.entity.vo.RoomVO">
+        <id column="id" property="id"/>
+        <result column="dormitory_id"   property="dormitoryId"/>
+        <result column="dormitory_name" property="dormitoryName"/>
+        <result column="dormitory_type" property="dormitoryType"/>
+        <result column="name"           property="name"/>
+        <result column="area"           property="area"/>
+        <result column="capacity"       property="capacity"/>
+        <result column="rent"           property="rent"/>
+        <result column="status"         property="status"/>
+        <result column="remark"         property="remark"/>
+        <result column="created_at"     property="createdAt"/>
+        <result column="resident_count" property="residentCount"/>
+    </resultMap>
+
+    <select id="selectAvailable" resultMap="RoomVOResultMap">
+        SELECT r.id, r.dormitory_id, d.name AS dormitory_name, d.type AS dormitory_type,
+               r.name, r.area, r.capacity, r.rent, r.status, r.remark, r.created_at,
+               COALESCE(active.cnt, 0) AS resident_count
+        FROM rooms r
+        INNER JOIN dormitories d ON d.id = r.dormitory_id AND d.is_deleted = 0
+        LEFT JOIN (
+            SELECT room_id, COUNT(*) AS cnt
+            FROM residences
+            WHERE status = 'active'
+            <if test="date != null and date != ''">
+              AND (expected_checkout_date IS NULL OR expected_checkout_date &gt;= #{date})
+            </if>
+            GROUP BY room_id
+        ) active ON active.room_id = r.id
+        WHERE r.is_deleted = 0
+          AND r.status IN ('available', 'occupied')
+          AND COALESCE(active.cnt, 0) &lt; r.capacity
+          <if test="gender != null and gender != ''">
+          AND d.type = #{gender}
+          </if>
+        ORDER BY r.dormitory_id, r.name
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rooms (dormitory_id, name, area, capacity, rent, status, remark, is_deleted, created_at)
+        VALUES (#{dormitoryId}, #{name}, #{area}, #{capacity}, #{rent}, 'available', #{remark}, 0, NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE rooms
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="area != null">area = #{area},</if>
+            <if test="capacity != null">capacity = #{capacity},</if>
+            rent = #{rent},
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE rooms SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE rooms SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM rooms r
+        INNER JOIN dormitories d ON d.id = r.dormitory_id AND d.is_deleted = 0 AND d.status = 'active'
+        WHERE r.is_deleted = 0
+    </select>
+
+    <select id="countAvailable" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM rooms r
+        INNER JOIN dormitories d ON d.id = r.dormitory_id AND d.is_deleted = 0 AND d.status = 'active'
+        LEFT JOIN (
+            SELECT room_id, COUNT(*) AS active_cnt
+            FROM residences
+            WHERE status = 'active'
+            GROUP BY room_id
+        ) ar ON ar.room_id = r.id
+        WHERE r.is_deleted = 0
+          AND r.status IN ('available', 'occupied')
+          AND COALESCE(ar.active_cnt, 0) &lt; r.capacity
+    </select>
+
+    <select id="selectOccupancyByDormitory" resultType="java.util.Map">
+        SELECT
+            d.id,
+            d.name,
+            COUNT(r.id)                                                                                           AS totalRooms,
+            COALESCE(SUM(CASE WHEN r.id IS NOT NULL AND COALESCE(ar.active_cnt, 0) > 0 THEN 1 ELSE 0 END), 0)   AS occupiedRooms,
+            COALESCE(SUM(CASE WHEN r.id IS NOT NULL AND COALESCE(ar.active_cnt, 0) &lt; r.capacity AND r.status IN ('available', 'occupied') THEN 1 ELSE 0 END), 0) AS availableRooms,
+            COALESCE(SUM(CASE WHEN r.id IS NOT NULL THEN COALESCE(ar.active_cnt, 0) ELSE 0 END), 0)              AS residentCount,
+            COALESCE(SUM(CASE WHEN r.id IS NOT NULL THEN GREATEST(0, COALESCE(r.capacity, 0) - COALESCE(ar.active_cnt, 0)) ELSE 0 END), 0) AS availableCapacity,
+            COALESCE(SUM(COALESCE(r.capacity, 0)), 0)                                                            AS totalCapacity
+        FROM dormitories d
+        LEFT JOIN rooms r ON r.dormitory_id = d.id AND r.is_deleted = 0
+        LEFT JOIN (
+            SELECT room_id, COUNT(*) AS active_cnt
+            FROM residences
+            WHERE status = 'active'
+            GROUP BY room_id
+        ) ar ON ar.room_id = r.id
+        WHERE d.is_deleted = 0 AND d.status = 'active'
+        GROUP BY d.id, d.name
+        ORDER BY d.id
+    </select>
+
+
+    <select id="selectRoomResidentsByDormitoryId" resultType="java.util.Map">
+        SELECT
+            r.id                                                     AS roomId,
+            r.name                                                   AS roomName,
+            r.capacity,
+            COALESCE(ar.active_cnt, 0)                               AS residentCount,
+            res.id                                                   AS residenceId,
+            e.id                                                     AS employeeId,
+            e.name                                                   AS employeeName,
+            e.type                                                   AS employeeType,
+            e.department                                             AS department,
+            DATE_FORMAT(res.checkin_date,  '%Y-%m-%d')               AS checkinDate,
+            DATE_FORMAT(res.checkout_date, '%Y-%m-%d')               AS checkoutDate
+        FROM rooms r
+        LEFT JOIN (
+            SELECT room_id, COUNT(*) AS active_cnt
+            FROM residences WHERE status = 'active' GROUP BY room_id
+        ) ar ON ar.room_id = r.id
+        LEFT JOIN residences res ON res.room_id = r.id AND res.status = 'active'
+        LEFT JOIN employees  e   ON e.id = res.employee_id AND e.is_deleted = 0
+        WHERE r.dormitory_id = #{dormitoryId} AND r.is_deleted = 0
+        ORDER BY r.name, e.name
+    </select>
+
+    <!-- 空室一覧用：JOIN+集計で1クエリに統合（N+1回避） -->
+    <resultMap id="VacancyVOResultMap" type="com.dom.dormitory.entity.vo.VacancyVO">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="area" property="area"/>
+        <result column="capacity" property="capacity"/>
+        <result column="dormitory_name" property="dormitoryName"/>
+        <result column="dormitory_type" property="dormitoryType"/>
+        <result column="current_occupancy" property="currentOccupancy"/>
+        <result column="last_checkout" property="lastCheckout"/>
+    </resultMap>
+
+    <select id="selectVacancyList" resultMap="VacancyVOResultMap">
+        SELECT r.id, r.name, r.area, r.capacity,
+               d.name AS dormitory_name, d.type AS dormitory_type,
+               COALESCE(active.cnt, 0) AS current_occupancy,
+               (SELECT DATE_FORMAT(MAX(res2.checkout_date), '%Y-%m-%d')
+                FROM residences res2
+                WHERE res2.room_id = r.id AND res2.checkout_date IS NOT NULL) AS last_checkout
+        FROM rooms r
+        INNER JOIN dormitories d ON d.id = r.dormitory_id AND d.is_deleted = 0
+        LEFT JOIN (
+            SELECT room_id, COUNT(*) AS cnt
+            FROM residences
+            WHERE status = 'active'
+            <if test="date != null and date != ''">
+              AND (expected_checkout_date IS NULL OR expected_checkout_date &gt;= #{date})
+            </if>
+            GROUP BY room_id
+        ) active ON active.room_id = r.id
+        WHERE r.is_deleted = 0
+          AND r.status IN ('available', 'occupied')
+          AND COALESCE(active.cnt, 0) &lt; r.capacity
+          <if test="gender != null and gender != ''">
+          AND d.type = #{gender}
+          </if>
+        ORDER BY d.id, r.name
+    </select>
+
+    <select id="selectAllNonDeleted" resultMap="BaseResultMap">
+        SELECT id, dormitory_id, name, rent
+        FROM rooms
+        WHERE is_deleted = 0
+        ORDER BY dormitory_id, name
+    </select>
+
+</mapper>

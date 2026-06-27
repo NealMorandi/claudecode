@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.EquipmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.Equipment">
+        <id column="id"         property="id"/>
+        <result column="name"       property="name"/>
+        <result column="maker"      property="maker"/>
+        <result column="category"   property="category"/>
+        <result column="note"       property="remark"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, name, maker, category, note, is_deleted, created_at
+        FROM equipment
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT id, name, maker, category, note, is_deleted, created_at
+        FROM equipment
+        WHERE is_deleted = 0
+        ORDER BY category, name
+    </select>
+
+    <sql id="whereCondition">
+        WHERE is_deleted = 0
+        <if test="name != null and name != ''">AND name LIKE CONCAT('%', #{name}, '%')</if>
+        <if test="category != null and category != ''">AND category = #{category}</if>
+    </sql>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT id, name, maker, category, note, is_deleted, created_at
+        FROM equipment
+        <include refid="whereCondition"/>
+        ORDER BY category, name
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByCondition" resultType="long">
+        SELECT COUNT(*) FROM equipment
+        <include refid="whereCondition"/>
+    </select>
+
+    <select id="countCategoryByCondition" resultType="long">
+        SELECT COUNT(DISTINCT category) FROM equipment
+        <include refid="whereCondition"/>
+    </select>
+
+    <select id="countRemarkByCondition" resultType="long">
+        SELECT COUNT(*) FROM equipment
+        WHERE is_deleted = 0
+        AND note IS NOT NULL AND note != ''
+        <if test="name != null and name != ''">AND name LIKE CONCAT('%', #{name}, '%')</if>
+        <if test="category != null and category != ''">AND category = #{category}</if>
+    </select>
+
+    <!-- 寮IDに紐づく備品一覧（入居中の residence_items 経由） -->
+    <select id="selectByDormitoryId" resultType="java.util.Map">
+        SELECT DISTINCT
+            e.id,
+            e.name,
+            e.maker,
+            e.category,
+            e.note AS remark
+        FROM equipment e
+        INNER JOIN residence_items ri  ON ri.equipment_id = e.id
+        INNER JOIN residences res      ON res.id = ri.residence_id AND res.status = 'active'
+        INNER JOIN rooms r             ON r.id = res.room_id AND r.is_deleted = 0
+        WHERE r.dormitory_id = #{dormitoryId} AND e.is_deleted = 0
+        ORDER BY e.category, e.name
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO equipment (name, maker, category, note, is_deleted, created_at)
+        VALUES (#{name}, #{maker}, #{category}, #{remark}, 0, NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE equipment
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="maker != null">maker = #{maker},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="remark != null">note = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE equipment SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+</mapper>

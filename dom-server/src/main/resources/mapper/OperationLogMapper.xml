@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.OperationLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.OperationLog">
+        <id column="id" property="id"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="action" property="action"/>
+        <result column="target_desc" property="targetDesc"/>
+        <result column="target_id" property="targetId"/>
+        <result column="detail" property="detail"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- action フィルター: 完全一致 OR 末尾一致（例: "delete" → "delete" OR "dormitory_delete"） -->
+    <sql id="whereConditions">
+        <where>
+            <if test="action != null and action != ''">
+                AND (action = #{action} OR action LIKE CONCAT('%_', #{action}))
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (operator_name LIKE CONCAT('%', #{keyword}, '%')
+                  OR target_desc   LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="from != null and from != ''">AND created_at &gt;= #{from}</if>
+            <if test="to   != null and to   != ''">AND created_at &lt;= #{to}</if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT id, operator_id, operator_name, action, target_desc, target_id, detail, created_at
+        FROM operation_logs
+        <include refid="whereConditions"/>
+        ORDER BY created_at DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM operation_logs
+        <include refid="whereConditions"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO operation_logs (operator_id, operator_name, action, target_desc, target_id, detail, created_at)
+        VALUES (#{operatorId}, #{operatorName}, #{action}, #{targetDesc}, #{targetId}, #{detail}, NOW())
+    </insert>
+
+    <select id="selectForExport" resultMap="BaseResultMap">
+        SELECT id, operator_id, operator_name, action, target_desc, target_id, detail, created_at
+        FROM operation_logs
+        <include refid="whereConditions"/>
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="countAllByActionSuffix" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM operation_logs
+        WHERE action = #{type} OR action LIKE CONCAT('%_', #{type})
+    </select>
+
+</mapper>

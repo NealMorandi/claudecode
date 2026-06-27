@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.ResidenceItemMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.ResidenceItem">
+        <id column="id" property="id"/>
+        <result column="residence_id" property="residenceId"/>
+        <result column="equipment_id" property="equipmentId"/>
+        <result column="prepared" property="prepared"/>
+        <result column="quantity" property="quantity"/>
+        <result column="storage_location" property="storageLocation"/>
+        <result column="disposition" property="disposition"/>
+    </resultMap>
+
+    <!-- 備品名/カテゴリをJOINで1クエリ取得（N+1回避） -->
+    <resultMap id="ResidenceItemVOResultMap" type="com.dom.dormitory.entity.vo.ResidenceItemVO">
+        <id column="id"               property="id"/>
+        <result column="residence_id"   property="residenceId"/>
+        <result column="equipment_id"   property="equipmentId"/>
+        <result column="equipment_name" property="equipmentName"/>
+        <result column="category"       property="category"/>
+        <result column="prepared"       property="prepared"/>
+        <result column="storage_location" property="storageLocation"/>
+        <result column="disposition"    property="disposition"/>
+    </resultMap>
+
+    <select id="selectWithEquipmentByResidenceId" resultMap="ResidenceItemVOResultMap">
+        SELECT ri.id, ri.residence_id, ri.equipment_id,
+               e.name AS equipment_name, e.category,
+               ri.prepared, ri.storage_location, ri.disposition
+        FROM residence_items ri
+        INNER JOIN equipment e ON e.id = ri.equipment_id AND e.is_deleted = 0
+        WHERE ri.residence_id = #{residenceId}
+        ORDER BY e.category, e.name
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, residence_id, equipment_id, prepared, quantity, storage_location, disposition
+        FROM residence_items
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByResidenceId" resultMap="BaseResultMap">
+        SELECT id, residence_id, equipment_id, prepared, quantity, storage_location, disposition
+        FROM residence_items
+        WHERE residence_id = #{residenceId}
+    </select>
+
+    <select id="selectStorageItems" resultMap="BaseResultMap">
+        SELECT ri.id, ri.residence_id, ri.equipment_id, ri.prepared, ri.storage_location, ri.disposition
+        FROM residence_items ri
+        LEFT JOIN residences r ON r.id = ri.residence_id
+        WHERE (r.status = 'checked_out' OR ri.residence_id IS NULL)
+          AND ri.disposition = 'storage'
+        ORDER BY ri.storage_location
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO residence_items (residence_id, equipment_id, prepared, quantity, storage_location, disposition)
+        VALUES (#{residenceId}, #{equipmentId}, #{prepared}, #{quantity}, #{storageLocation}, #{disposition})
+    </insert>
+
+    <insert id="batchInsert">
+        INSERT INTO residence_items (residence_id, equipment_id, prepared, quantity, storage_location, disposition)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.residenceId}, #{item.equipmentId}, #{item.prepared}, #{item.quantity}, #{item.storageLocation}, #{item.disposition})
+        </foreach>
+    </insert>
+
+    <update id="update">
+        UPDATE residence_items
+        <set>
+            <if test="prepared != null">prepared = #{prepared},</if>
+            <if test="storageLocation != null">storage_location = #{storageLocation},</if>
+            <if test="disposition != null">disposition = #{disposition},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="batchUpdate">
+        UPDATE residence_items
+        SET
+            prepared = CASE id
+                <foreach collection="list" item="item">
+                    WHEN #{item.id} THEN IFNULL(#{item.prepared}, prepared)
+                </foreach>
+                ELSE prepared
+            END,
+            storage_location = CASE id
+                <foreach collection="list" item="item">
+                    WHEN #{item.id} THEN #{item.storageLocation}
+                </foreach>
+                ELSE storage_location
+            END,
+            disposition = CASE id
+                <foreach collection="list" item="item">
+                    WHEN #{item.id} THEN IFNULL(#{item.disposition}, disposition)
+                </foreach>
+                ELSE disposition
+            END
+        WHERE id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </update>
+
+</mapper>

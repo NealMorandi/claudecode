@@ -1,0 +1,20 @@
+# Frontend
+dom-dev/node_modules/
+dom-dev/dist/
+dom-dev/.env.local
+dom-dev/.env.*.local
+dom-dev/.env.development
+
+# Backend
+dom-server/target/
+dom-server/*.log
+dom-server/*.log.err
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/

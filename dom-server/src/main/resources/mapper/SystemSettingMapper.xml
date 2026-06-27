@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.SystemSettingMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.SystemSetting">
+        <id column="id" property="id"/>
+        <result column="long_term_years" property="longTermYears"/>
+        <result column="unit_price_japan" property="unitPriceJapan"/>
+        <result column="unit_price_china" property="unitPriceChina"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT id, long_term_years, unit_price_japan, unit_price_china, updated_at
+        FROM settings
+        LIMIT 1
+    </select>
+
+    <update id="updateAll">
+        UPDATE settings
+        SET updated_at = NOW()
+        <if test="longTermYears != null">, long_term_years = #{longTermYears}</if>
+        <if test="unitPriceJapan != null">, unit_price_japan = #{unitPriceJapan}</if>
+        <if test="unitPriceChina != null">, unit_price_china = #{unitPriceChina}</if>
+        WHERE id = 1
+    </update>
+
+</mapper>

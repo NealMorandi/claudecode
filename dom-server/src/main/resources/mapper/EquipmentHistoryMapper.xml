@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.EquipmentHistoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.EquipmentHistory">
+        <id     column="id"           property="id"/>
+        <result column="equipment_id" property="equipmentId"/>
+        <result column="action"       property="action"/>
+        <result column="from_room_id"      property="fromRoomId"/>
+        <result column="to_room_id"        property="toRoomId"/>
+        <result column="storage_location"  property="storageLocation"/>
+        <result column="quantity"             property="quantity"/>
+        <result column="equipment_condition" property="equipmentCondition"/>
+        <result column="residence_id"       property="residenceId"/>
+        <result column="employee_id"  property="employeeId"/>
+        <result column="operator_id"  property="operatorId"/>
+        <result column="note"         property="note"/>
+        <result column="action_at"    property="actionAt"/>
+    </resultMap>
+
+    <sql id="baseColumns">
+        id, equipment_id, action, from_room_id, to_room_id,
+        storage_location, quantity, equipment_condition, residence_id, employee_id, operator_id, note, action_at
+    </sql>
+
+    <sql id="whereCondition">
+        WHERE 1=1
+        <if test="equipmentId != null">AND equipment_id = #{equipmentId}</if>
+        <if test="action != null and action != ''">AND action = #{action}</if>
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO equipment_history
+            (equipment_id, action, from_room_id, to_room_id, storage_location,
+             quantity, equipment_condition, residence_id, employee_id, operator_id, note, action_at)
+        VALUES
+            (#{equipmentId}, #{action}, #{fromRoomId}, #{toRoomId}, #{storageLocation},
+             #{quantity}, #{equipmentCondition}, #{residenceId}, #{employeeId}, #{operatorId}, #{note}, NOW())
+    </insert>
+
+    <select id="selectByEquipmentId" resultMap="BaseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM equipment_history
+        WHERE equipment_id = #{equipmentId}
+        ORDER BY action_at DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM equipment_history
+        ORDER BY action_at DESC
+    </select>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM equipment_history
+        <include refid="whereCondition"/>
+        ORDER BY action_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByCondition" resultType="long">
+        SELECT COUNT(*) FROM equipment_history
+        <include refid="whereCondition"/>
+    </select>
+
+    <select id="selectByAction" resultMap="BaseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM equipment_history
+        WHERE action = #{action}
+        ORDER BY action_at DESC
+    </select>
+
+    <update id="updateStorageLocation">
+        UPDATE equipment_history
+        SET storage_location = #{storageLocation}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectStorageByDormitoryId" resultMap="BaseResultMap">
+        SELECT eh.id, eh.equipment_id, eh.action, eh.from_room_id, eh.to_room_id,
+               eh.storage_location, eh.quantity, eh.equipment_condition, eh.residence_id,
+               eh.employee_id, eh.operator_id, eh.note, eh.action_at
+        FROM equipment_history eh
+        LEFT JOIN rooms r ON r.id = eh.to_room_id
+        WHERE eh.action = 'storage'
+          AND (
+              r.dormitory_id = #{dormitoryId}
+              OR eh.storage_location = (SELECT name FROM dormitories WHERE id = #{dormitoryId})
+          )
+        ORDER BY eh.action_at DESC
+    </select>
+
+    <resultMap id="HistoryVOResultMap" type="com.dom.dormitory.entity.vo.EquipmentHistoryVO">
+        <id     column="id"               property="id"/>
+        <result column="equipment_id"     property="equipmentId"/>
+        <result column="equipment_name"   property="equipmentName"/>
+        <result column="action"           property="action"/>
+        <result column="from_room_name"   property="fromRoomName"/>
+        <result column="to_room_name"     property="toRoomName"/>
+        <result column="storage_location" property="storageLocation"/>
+        <result column="residence_id"     property="residenceId"/>
+        <result column="employee_name"    property="employeeName"/>
+        <result column="operator_name"    property="operatorName"/>
+        <result column="note"             property="note"/>
+        <result column="action_at"        property="actionAt"/>
+    </resultMap>
+
+    <!-- 履歴一覧（N+1回避 JOIN版） -->
+    <select id="selectHistoryWithJoins" resultMap="HistoryVOResultMap">
+        SELECT
+            eh.id, eh.equipment_id, eh.action, eh.storage_location,
+            eh.residence_id, eh.note, eh.action_at,
+            e.name      AS equipment_name,
+            r_f.name    AS from_room_name,
+            r_t.name    AS to_room_name,
+            emp.name    AS employee_name,
+            u.name      AS operator_name
+        FROM equipment_history eh
+        INNER JOIN equipment e ON e.id = eh.equipment_id AND e.is_deleted = 0
+        LEFT JOIN rooms r_f  ON r_f.id  = eh.from_room_id  AND r_f.is_deleted  = 0
+        LEFT JOIN rooms r_t  ON r_t.id  = eh.to_room_id    AND r_t.is_deleted  = 0
+        LEFT JOIN employees emp ON emp.id = eh.employee_id  AND emp.is_deleted  = 0
+        LEFT JOIN users u    ON u.id     = eh.operator_id
+        WHERE 1=1
+        <if test="equipmentId != null">AND eh.equipment_id = #{equipmentId}</if>
+        <if test="action != null and action != ''">AND eh.action = #{action}</if>
+        ORDER BY eh.action_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <resultMap id="StorageVOResultMap" type="com.dom.dormitory.entity.vo.StorageVO">
+        <id     column="id"                  property="historyId"/>
+        <result column="equipment_id"        property="equipmentId"/>
+        <result column="residence_id"        property="residenceId"/>
+        <result column="storage_location"    property="storageLocation"/>
+        <result column="to_room_id"          property="roomId"/>
+        <result column="quantity"            property="quantity"/>
+        <result column="equipment_condition" property="equipmentCondition"/>
+        <result column="employee_id"         property="employeeId"/>
+        <result column="note"                property="remark"/>
+        <result column="equipment_name"      property="equipmentName"/>
+        <result column="maker"               property="maker"/>
+        <result column="category"            property="category"/>
+        <result column="employee_name"       property="employeeName"/>
+        <result column="room_name"           property="roomName"/>
+        <result column="dormitory_name"      property="dormitoryName"/>
+    </resultMap>
+
+    <!-- 保管一覧（N+1回避 JOIN版） -->
+    <select id="selectStorageListWithJoins" resultMap="StorageVOResultMap">
+        SELECT
+            eh.id, eh.equipment_id, eh.residence_id, eh.storage_location,
+            eh.to_room_id, eh.quantity, eh.equipment_condition,
+            eh.employee_id, eh.note,
+            e.name      AS equipment_name,
+            e.maker     AS maker,
+            e.category  AS category,
+            emp.name    AS employee_name,
+            COALESCE(r_d.name, r_v.name) AS room_name,
+            COALESCE(d_d.name, d_v.name) AS dormitory_name
+        FROM equipment_history eh
+        INNER JOIN equipment e
+            ON e.id = eh.equipment_id AND e.is_deleted = 0
+        LEFT JOIN employees emp
+            ON emp.id = eh.employee_id AND emp.is_deleted = 0
+        LEFT JOIN rooms r_d
+            ON r_d.id = COALESCE(eh.to_room_id, eh.from_room_id) AND r_d.is_deleted = 0
+        LEFT JOIN dormitories d_d
+            ON d_d.id = r_d.dormitory_id AND d_d.is_deleted = 0
+        LEFT JOIN residences res
+            ON res.id = eh.residence_id
+            AND COALESCE(eh.to_room_id, eh.from_room_id) IS NULL
+            AND res.is_deleted = 0
+        LEFT JOIN rooms r_v
+            ON r_v.id = res.room_id AND r_v.is_deleted = 0
+        LEFT JOIN dormitories d_v
+            ON d_v.id = r_v.dormitory_id AND d_v.is_deleted = 0
+        WHERE eh.action = 'storage'
+        <if test="name != null and name != ''">
+            AND e.name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="location != null and location != ''">
+            AND eh.storage_location LIKE CONCAT('%', #{location}, '%')
+        </if>
+        ORDER BY eh.action_at DESC
+    </select>
+
+    <update id="updateStorageHistory">
+        UPDATE equipment_history
+        SET equipment_id        = #{dto.equipmentId},
+            to_room_id          = #{dto.roomId},
+            employee_id         = #{dto.employeeId},
+            equipment_condition = #{dto.equipmentCondition},
+            storage_location    = #{dto.storageLocation},
+            quantity            = #{dto.quantity},
+            note                = #{dto.remark}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

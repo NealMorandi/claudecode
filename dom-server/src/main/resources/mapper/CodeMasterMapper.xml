@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.CodeMasterMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.CodeMaster">
+        <id     column="id"         property="id"/>
+        <result column="category"   property="category"/>
+        <result column="code"       property="code"/>
+        <result column="name"       property="name"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="selectByCategory" resultMap="BaseResultMap">
+        SELECT id, category, code, name, sort_order, is_deleted, created_at
+        FROM code_master
+        WHERE category = #{category} AND is_deleted = 0
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+</mapper>

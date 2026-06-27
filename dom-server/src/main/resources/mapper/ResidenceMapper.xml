@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.ResidenceMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.Residence">
+        <id column="id" property="id"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="room_id" property="roomId"/>
+        <result column="checkin_date" property="checkinDate"/>
+        <result column="expected_checkout_date" property="expectedCheckoutDate"/>
+        <result column="checkout_date" property="checkoutDate"/>
+        <result column="checkout_reason" property="checkoutReason"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 一覧用：JOIN結果を直接VOにマッピング（N+1回避） -->
+    <resultMap id="ResidenceVOResultMap" type="com.dom.dormitory.entity.vo.ResidenceVO">
+        <id column="id" property="id"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="room_id" property="roomId"/>
+        <result column="checkin_date" property="checkinDate"/>
+        <result column="expected_checkout_date" property="expectedCheckoutDate"/>
+        <result column="checkout_date" property="checkoutDate"/>
+        <result column="checkout_reason" property="checkoutReason"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="employee_name" property="employeeName"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="employee_type" property="employeeType"/>
+        <result column="room_name" property="roomName"/>
+        <result column="dormitory_name" property="dormitoryName"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, employee_id, room_id, checkin_date, expected_checkout_date,
+               checkout_date, checkout_reason, status, created_at
+        FROM residences
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectActiveByEmployeeId" resultMap="BaseResultMap">
+        SELECT id, employee_id, room_id, checkin_date, expected_checkout_date,
+               checkout_date, checkout_reason, status, created_at
+        FROM residences
+        WHERE employee_id = #{employeeId} AND status = 'active'
+        LIMIT 1
+    </select>
+
+    <select id="selectList" resultMap="ResidenceVOResultMap">
+        SELECT r.id, r.employee_id, r.room_id, r.checkin_date, r.expected_checkout_date,
+               r.checkout_date, r.checkout_reason, r.status, r.created_at,
+               e.name AS employee_name, e.employee_no, e.type AS employee_type,
+               rm.name AS room_name, d.name AS dormitory_name
+        FROM residences r
+        INNER JOIN employees e ON e.id = r.employee_id
+        INNER JOIN rooms rm ON rm.id = r.room_id
+        INNER JOIN dormitories d ON d.id = rm.dormitory_id
+        <where>
+            <if test="status != null and status != ''">
+                AND r.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (e.name LIKE CONCAT('%', #{keyword}, '%')
+                  OR e.employee_no LIKE CONCAT('%', #{keyword}, '%')
+                  OR d.name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="checkinFrom != null and checkinFrom != ''">
+                AND r.checkin_date &gt;= #{checkinFrom}
+            </if>
+            <if test="checkinTo != null and checkinTo != ''">
+                AND r.checkin_date &lt;= #{checkinTo}
+            </if>
+        </where>
+        ORDER BY r.created_at DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM residences r
+        INNER JOIN employees e ON e.id = r.employee_id
+        INNER JOIN rooms rm ON rm.id = r.room_id
+        INNER JOIN dormitories d ON d.id = rm.dormitory_id
+        <where>
+            <if test="status != null and status != ''">
+                AND r.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (e.name LIKE CONCAT('%', #{keyword}, '%')
+                  OR e.employee_no LIKE CONCAT('%', #{keyword}, '%')
+                  OR d.name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="checkinFrom != null and checkinFrom != ''">
+                AND r.checkin_date &gt;= #{checkinFrom}
+            </if>
+            <if test="checkinTo != null and checkinTo != ''">
+                AND r.checkin_date &lt;= #{checkinTo}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO residences (employee_id, room_id, checkin_date, expected_checkout_date, status, created_at)
+        VALUES (#{employeeId}, #{roomId}, #{checkinDate}, #{expectedCheckoutDate}, 'active', NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE residences
+        <set>
+            <if test="expectedCheckoutDate != null">expected_checkout_date = #{expectedCheckoutDate},</if>
+            <if test="checkoutDate != null">checkout_date = #{checkoutDate},</if>
+            <if test="checkoutReason != null">checkout_reason = #{checkoutReason},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectActiveInMonth" resultMap="BaseResultMap">
+        SELECT id, employee_id, room_id, checkin_date, expected_checkout_date,
+               checkout_date, checkout_reason, status, created_at
+        FROM residences
+        WHERE (status = 'active'
+            OR (status = 'checked_out' AND DATE_FORMAT(checkout_date, '%Y-%m') = #{yearMonth}))
+          AND DATE_FORMAT(checkin_date, '%Y-%m') &lt;= #{yearMonth}
+    </select>
+
+    <select id="countActiveByRoomId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM residences
+        WHERE room_id = #{roomId} AND status = 'active'
+    </select>
+
+    <select id="selectLastCheckoutByRoomId" resultType="java.lang.String">
+        SELECT DATE_FORMAT(MAX(checkout_date), '%Y-%m-%d')
+        FROM residences
+        WHERE room_id = #{roomId} AND checkout_date IS NOT NULL
+    </select>
+
+    <select id="selectLongTermResidences" resultMap="BaseResultMap">
+        SELECT id, employee_id, room_id, checkin_date, expected_checkout_date,
+               checkout_date, checkout_reason, status, created_at
+        FROM residences
+        WHERE status = 'active'
+          AND TIMESTAMPDIFF(YEAR, checkin_date, CURDATE()) >= #{thresholdYears}
+    </select>
+
+    <select id="selectAllActive" resultMap="BaseResultMap">
+        SELECT id, employee_id, room_id, checkin_date, expected_checkout_date,
+               checkout_date, checkout_reason, status, created_at
+        FROM residences
+        WHERE status = 'active'
+        ORDER BY checkin_date
+    </select>
+
+    <select id="selectResidentCountsByDormitoryId" resultType="java.util.Map">
+        SELECT r.id AS roomId, COUNT(res.id) AS residentCount
+        FROM rooms r
+        LEFT JOIN residences res ON res.room_id = r.id AND res.status = 'active'
+        WHERE r.dormitory_id = #{dormitoryId} AND r.is_deleted = 0
+        GROUP BY r.id
+    </select>
+
+    <select id="countActiveByDormitoryId" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM residences r
+        INNER JOIN rooms rm ON rm.id = r.room_id AND rm.is_deleted = 0
+        WHERE rm.dormitory_id = #{dormitoryId}
+          AND r.status = 'active'
+    </select>
+
+    <select id="countActive" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM residences WHERE status = 'active'
+    </select>
+
+</mapper>

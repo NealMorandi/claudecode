@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dom.dormitory.mapper.EmployeeMapper">
+
+    <resultMap id="BaseResultMap" type="com.dom.dormitory.entity.Employee">
+        <id column="id" property="id"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="name" property="name"/>
+        <result column="gender" property="gender"/>
+        <result column="type" property="type"/>
+        <result column="department" property="department"/>
+        <result column="first_use_date" property="firstUseDate"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, employee_no, name, gender, type, department, first_use_date, is_deleted, created_at
+        FROM employees
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT id, employee_no, name, gender, type, department, first_use_date, is_deleted, created_at
+        FROM employees
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (employee_no LIKE CONCAT('%', #{keyword}, '%')
+              OR name LIKE CONCAT('%', #{keyword}, '%')
+              OR department LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM employees
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (employee_no LIKE CONCAT('%', #{keyword}, '%')
+              OR name LIKE CONCAT('%', #{keyword}, '%')
+              OR department LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <select id="selectByKeyword" resultMap="BaseResultMap">
+        SELECT id, employee_no, name, gender, type, department, first_use_date, is_deleted, created_at
+        FROM employees
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (employee_no LIKE CONCAT('%', #{keyword}, '%')
+              OR name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY name
+        LIMIT 20
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO employees (employee_no, name, gender, type, department, is_deleted, created_at)
+        VALUES (#{employeeNo}, #{name}, #{gender}, #{type}, #{department}, 0, NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE employees
+        <set>
+            <if test="employeeNo != null">employee_no = #{employeeNo},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="department != null">department = #{department},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE employees SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+    <update id="updateFirstUseDate">
+        UPDATE employees SET first_use_date = #{firstUseDate} WHERE id = #{id}
+    </update>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM employees WHERE is_deleted = 0
+    </select>
+
+    <select id="countResiding" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT e.id)
+        FROM employees e
+        INNER JOIN residences r ON r.employee_id = e.id AND r.status = 'active'
+        WHERE e.is_deleted = 0
+    </select>
+
+    <select id="countByType" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM employees WHERE is_deleted = 0 AND type = #{type}
+    </select>
+
+    <!-- 社員一覧＋在住状況：LEFT JOINで1クエリ（N+1回避） -->
+    <resultMap id="EmployeeVOResultMap" type="com.dom.dormitory.entity.vo.EmployeeVO">
+        <id column="id" property="id"/>
+        <result column="employee_no"      property="employeeNo"/>
+        <result column="name"             property="name"/>
+        <result column="gender"           property="gender"/>
+        <result column="type"             property="type"/>
+        <result column="department"       property="department"/>
+        <result column="first_use_date"   property="firstUseDate"/>
+        <result column="created_at"       property="createdAt"/>
+        <result column="residence_status" property="residenceStatus"/>
+    </resultMap>
+
+    <sql id="employeeWithStatusSelect">
+        SELECT e.id, e.employee_no, e.name, e.gender, e.type, e.department,
+               e.first_use_date, e.created_at,
+               CASE WHEN r.id IS NOT NULL THEN 'active' ELSE 'none' END AS residence_status
+        FROM employees e
+        LEFT JOIN residences r ON r.employee_id = e.id AND r.status = 'active'
+        WHERE e.is_deleted = 0
+    </sql>
+
+    <select id="selectListWithStatus" resultMap="EmployeeVOResultMap">
+        <include refid="employeeWithStatusSelect"/>
+        <if test="keyword != null and keyword != ''">
+            AND (e.employee_no LIKE CONCAT('%', #{keyword}, '%')
+              OR e.name        LIKE CONCAT('%', #{keyword}, '%')
+              OR e.department  LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY e.created_at DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="selectByKeywordWithStatus" resultMap="EmployeeVOResultMap">
+        <include refid="employeeWithStatusSelect"/>
+        <if test="keyword != null and keyword != ''">
+            AND (e.employee_no LIKE CONCAT('%', #{keyword}, '%')
+              OR e.name        LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY e.name
+        LIMIT 20
+    </select>
+
+</mapper>
