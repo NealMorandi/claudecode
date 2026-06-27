@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /api
     encoding:
@@ -8,14 +8,15 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/dom_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true
-    username: root
-    password: root
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/dom_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
       database: 0
       timeout: 10s
       lettuce:
@@ -39,10 +40,10 @@ mybatis:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 jwt:
-  secret: dom-dormitory-secret-key-2024-very-long-and-secure
-  expire: 86400
+  secret: ${JWT_SECRET:dom-dormitory-secret-key-2024-very-long-and-secure}
+  expire: ${JWT_EXPIRE:86400}
 
 logging:
   level:
-    com.dom.dormitory: debug
+    com.dom.dormitory: ${LOG_LEVEL:info}
     org.springframework.security: warn
